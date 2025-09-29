@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, Arial, sans-serif; margin:0; background:#f6f7f9; }
+.container { max-width: 960px; margin: 0 auto; padding: 1rem; }
+header { display:flex; align-items:center; justify-content:space-between; background:white; border-bottom:1px solid #eee; }
+nav a, nav form button { margin-right:.75rem; }
+.card { background:white; padding:1rem; border-radius:12px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display:grid; gap:.75rem; }
+.flash { background:#fff3cd; border:1px solid #ffe089; padding:.5rem .75rem; border-radius:8px; margin: .5rem 0; }
+.flash.success { background:#d1fae5; border-color:#a7f3d0; }
+.posts { display:grid; gap:1rem; }
+.post { background:white; padding:1rem; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+.meta { color:#666; font-size:.9rem; margin-bottom:.5rem; }
+button { cursor:pointer; }
+label { display:block; margin:.5rem 0; }
+input[type="text"], input[type="email"], input[type="password"], textarea, select {
+  width:100%; padding:.5rem .6rem; border:1px solid #ddd; border-radius:8px; background:#fff;
+}
+.inline { display:inline-flex; gap:.5rem; align-items:center; }
+.chip { display:inline-block; background:#eef2ff; padding:.2rem .5rem; border-radius:999px; margin-right:.25rem; }
+.filters .chip { background:#f1f5f9; }

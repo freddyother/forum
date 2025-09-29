@@ -1,0 +1,19 @@
+{{define "content"}}
+<h2>New Post</h2>
+<form method="post" action="/post/create" class="card">
+  <label>Title <input name="title" required></label>
+  <label>Content <textarea name="content" rows="6" required></textarea></label>
+  <fieldset>
+    <legend>Categories</legend>
+    {{range .Cats}}
+      <label class="chip">
+        <input type="checkbox" name="cats" value="{{.Name}}"> {{.Name}}
+      </label>
+    {{end}}
+    <label>or new category:
+      <input name="cats" placeholder="type a category name">
+    </label>
+  </fieldset>
+  <button type="submit">Publish</button>
+</form>
+{{end}}
