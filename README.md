@@ -50,11 +50,13 @@ forum/
 
 
 ```
-
+---
 
 ## 🧪 Tests
 
 go test ./...
+
+---
 
 ## 🔒 Security
 
@@ -70,6 +72,8 @@ Expiry configurable (SESSION_LIFETIME_HOURS).
 
 SQLite initialised with PRAGMA foreign_keys=ON.
 
+---
+
 ## 🚀 Roadmap
 
 ✅ Pagination for post listings.
@@ -82,12 +86,13 @@ SQLite initialised with PRAGMA foreign_keys=ON.
 
 🔜 CI/CD with automated testing.
 
-
+---
 ## 📜 Licence
 
 This project was built for educational purposes as part of 01Founders coursework.
 You are welcome to adapt or extend it for your own use.
 
+---
 ## ⚙️ Installation & Usage
 
 ### 1. Clone the repository
@@ -114,3 +119,4 @@ docker compose up --build
 Open in your browser: http://localhost:8080
 
 ```
+---
