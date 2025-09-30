@@ -1,9 +1,26 @@
 {{define "content"}}
-<h2>Register</h2>
-<form method="post" action="/register" class="card">
-  <label>Email <input type="email" name="email" required></label>
-  <label>Username <input name="username" required minlength="3"></label>
-  <label>Password <input type="password" name="password" required minlength="6"></label>
-  <button type="submit">Create account</button>
+<h2>Create account</h2>
+
+{{if .Error}}<div class="flash">{{.Error}}</div>{{end}}
+
+<form method="post" action="/register" class="card" id="registerForm" novalidate>
+  <label>Email
+    <input type="email" name="email" value="{{.Email}}" required autocomplete="email" autofocus>
+  </label>
+  <label>Username
+    <input name="username" value="{{.Username}}" minlength="3" required autocomplete="username">
+  </label>
+  <label>Password
+    <input type="password" name="password" id="regPass" minlength="6" required autocomplete="new-password">
+  </label>
+  <label>Confirm password
+    <input type="password" id="regPass2" minlength="6" required autocomplete="new-password">
+  </label>
+  <button type="submit">Sign up</button>
+  <div id="regError" class="flash" style="display:none;margin-top:.25rem"></div>
 </form>
+
+<p class="container" style="margin-top:.5rem">
+  Already have an account? <a href="/login">Sign in</a>
+</p>
 {{end}}

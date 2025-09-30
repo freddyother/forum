@@ -1,9 +1,24 @@
 {{define "content"}}
-<h2>Login</h2>
-{{if .OK}}<div class="flash success">Registration successful! Please log in.</div>{{end}}
-<form method="post" action="/login" class="card">
-  <label>Email <input type="email" name="email" required></label>
-  <label>Password <input type="password" name="password" required></label>
+<h2>Sign in</h2>
+
+{{if .OK}}<div class="flash success">Account created. You can sign in now.</div>{{end}}
+{{if .Reset}}<div class="flash success">If that email exists, a reset link has been sent.</div>{{end}}
+{{if .Error}}<div class="flash">{{.Error}}</div>{{end}}
+
+<form method="post" action="/login" class="card" novalidate>
+  <label>Email
+    <input type="email" name="email" value="{{.Email}}" required autocomplete="email" autofocus>
+  </label>
+  <label>Password
+    <input type="password" name="password" required minlength="6" autocomplete="current-password">
+  </label>
   <button type="submit">Log in</button>
 </form>
+
+<p class="container" style="margin-top:.5rem">
+  <a href="/forgot">Forgot password?</a>
+  &nbsp;•&nbsp;
+  Don’t have an account? <a href="/register">Create one</a>
+</p>
 {{end}}
+

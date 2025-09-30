@@ -1,5 +1,10 @@
-* { box-sizing: border-box; }
-body { font-family: system-ui, Arial, sans-serif; margin:0; background:#f6f7f9; }
+* { 
+  box-sizing: border-box; 
+}
+body { 
+  font-family: system-ui, Arial, sans-serif; 
+  margin:0; background:#f6f7f9; 
+}
 .container { max-width: 960px; margin: 0 auto; padding: 1rem; }
 header { display:flex; align-items:center; justify-content:space-between; background:white; border-bottom:1px solid #eee; }
 nav a, nav form button { margin-right:.75rem; }
@@ -17,3 +22,5 @@ input[type="text"], input[type="email"], input[type="password"], textarea, selec
 .inline { display:inline-flex; gap:.5rem; align-items:center; }
 .chip { display:inline-block; background:#eef2ff; padding:.2rem .5rem; border-radius:999px; margin-right:.25rem; }
 .filters .chip { background:#f1f5f9; }
+form.card button { padding:.6rem 1rem; border:none; border-radius:10px; }
+form.card button:hover { filter: brightness(0.97); }

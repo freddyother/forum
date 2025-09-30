@@ -7,11 +7,19 @@ import (
 )
 
 func Render(w http.ResponseWriter, name string, data any) {
-	files := []string{
-		filepath.Join("web", "templates", "layout.html"),
-		filepath.Join("web", "templates", name),
+	layout := filepath.Join("web", "templates", "layout.html")
+	flash := filepath.Join("web", "templates", "_flash.html")
+	view := filepath.Join("web", "templates", name)
+
+	t, err := template.ParseFiles(layout, flash, view)
+	if err != nil {
+		http.Error(w, "template parse error: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	t := template.Must(template.ParseFiles(files...))
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = t.ExecuteTemplate(w, "base", data)
+	if err := t.ExecuteTemplate(w, "base", data); err != nil {
+		http.Error(w, "template exec error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

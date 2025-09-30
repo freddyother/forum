@@ -1,0 +1,18 @@
+{{define "content"}}
+<h2>Reset your password</h2>
+
+{{if .OK}}<div class="flash success">If that email exists, a reset link has been sent.</div>{{end}}
+
+<form method="post" action="/forgot" class="card" novalidate>
+  <label>Email
+    <input type="email" name="email" required autocomplete="email" autofocus>
+  </label>
+  <button type="submit">Send reset link</button>
+</form>
+
+<p class="container" style="margin-top:.5rem">
+  <a href="/login">Back to sign in</a>
+  &nbsp;•&nbsp;
+  <a href="/register">Create account</a>
+</p>
+{{end}}
