@@ -1,26 +1,191 @@
-* { 
-  box-sizing: border-box; 
-}
-body { 
-  font-family: system-ui, Arial, sans-serif; 
-  margin:0; background:#f6f7f9; 
-}
-.container { max-width: 960px; margin: 0 auto; padding: 1rem; }
-header { display:flex; align-items:center; justify-content:space-between; background:white; border-bottom:1px solid #eee; }
-nav a, nav form button { margin-right:.75rem; }
-.card { background:white; padding:1rem; border-radius:12px; box-shadow: 0 2px 8px rgba(0,0,0,.05); display:grid; gap:.75rem; }
-.flash { background:#fff3cd; border:1px solid #ffe089; padding:.5rem .75rem; border-radius:8px; margin: .5rem 0; }
-.flash.success { background:#d1fae5; border-color:#a7f3d0; }
-.posts { display:grid; gap:1rem; }
-.post { background:white; padding:1rem; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
-.meta { color:#666; font-size:.9rem; margin-bottom:.5rem; }
-button { cursor:pointer; }
-label { display:block; margin:.5rem 0; }
-input[type="text"], input[type="email"], input[type="password"], textarea, select {
-  width:100%; padding:.5rem .6rem; border:1px solid #ddd; border-radius:8px; background:#fff;
-}
-.inline { display:inline-flex; gap:.5rem; align-items:center; }
-.chip { display:inline-block; background:#eef2ff; padding:.2rem .5rem; border-radius:999px; margin-right:.25rem; }
-.filters .chip { background:#f1f5f9; }
-form.card button { padding:.6rem 1rem; border:none; border-radius:10px; }
-form.card button:hover { filter: brightness(0.97); }
+/* ===============================
+   Light Pastel Forum — Vibrant
+   =============================== */
+
+   :root{
+    --bg:#f7f8fd;
+    --panel:#ffffff;
+    --text:#1f2937;
+    --muted:#667085;
+    --border:#e7e9f3;
+  
+    /* paleta alegre pastel */
+    --indigo:#6366f1;
+    --violet:#8b5cf6;
+    --pink:#ec4899;
+    --cyan:#06b6d4;
+    --lime:#22c55e;
+    --amber:#f59e0b;
+  
+    --primary: var(--violet);
+    --primary-600:#7c3aed;
+    --primary-50:#f5f3ff;
+  
+    --radius:16px;
+    --radius-sm:12px;
+    --shadow:0 14px 40px rgba(99,102,241,.08);
+    --shadow-sm:0 6px 18px rgba(2,6,23,.06);
+  
+    --focus:0 0 0 4px rgba(139,92,246,.18);
+  }
+  
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial;
+    /* fondo con blobs pastel muy suaves */
+    background:
+      radial-gradient(900px 600px at 15% -10%, rgba(236,72,153,.10), transparent 55%),
+      radial-gradient(900px 600px at 110% -20%, rgba(6,182,212,.10), transparent 55%),
+      radial-gradient(900px 700px at 50% -30%, rgba(99,102,241,.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+  }
+  
+  /* contenedor */
+  .container{max-width:1000px;margin:0 auto;padding:clamp(14px,2vw,22px)}
+  
+  /* header */
+  header{
+    position:sticky;top:0;z-index:40;
+    backdrop-filter:saturate(1.1) blur(6px);
+    background:color-mix(in oklab, var(--panel) 92%, transparent);
+    border-bottom:1px solid var(--border);
+  }
+  .header-inner{max-width:1000px;margin:0 auto;padding:12px clamp(14px,2vw,22px);
+    display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .brand{font-weight:800;letter-spacing:.2px;font-size:1.12rem}
+  nav a, nav form button{
+    color:var(--muted); text-decoration:none; font-weight:700;
+    padding:9px 14px; border-radius:999px; border:1px solid transparent;
+    transition:.18s ease; background:transparent;
+  }
+  nav a:hover, nav form button:hover{
+    color:var(--text);
+    background:color-mix(in oklab, var(--primary-50) 45%, transparent);
+    border-color:color-mix(in oklab, var(--primary) 20%, var(--border));
+  }
+  nav .primary{color:#fff;background:var(--primary);border-color:var(--primary)}
+  nav .primary:hover{background:var(--primary-600)}
+  
+  /* tarjetas y posts */
+  .card,.post{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .card{padding:18px}
+  .post{
+    padding:20px 20px 14px;
+    /* ligera luz desde arriba */
+    background:
+      linear-gradient(180deg, rgba(99,102,241,.06) 0%, transparent 35%) ,
+      var(--panel);
+  }
+  
+  /* títulos y meta */
+  h1,h2,h3{margin:0 0 .6rem}
+  h3{font-size:1.08rem}
+  .meta{color:var(--muted);font-size:.92rem;margin-bottom:.5rem}
+  
+  /* filtros */
+  section.filters{margin-bottom:14px}
+  section.filters form{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+  
+  /* inputs */
+  input[type="text"],input[type="email"],input[type="password"],textarea,select{
+    width:100%;padding:10px 12px;border-radius:12px;
+    border:1px solid var(--border);background:var(--panel);color:var(--text);
+    outline:none;transition:border-color .18s, box-shadow .18s, background .18s;
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
+  }
+  select{width:auto}
+  input::placeholder,textarea::placeholder{color:color-mix(in oklab, var(--muted) 78%, var(--text))}
+  input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:var(--focus)}
+  
+  /* chips (categorías) con toques pastel */
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:3px 12px;border-radius:999px;font-size:.82rem;font-weight:700;
+    background:color-mix(in oklab, var(--primary-50) 70%, var(--panel));
+    border:1px solid color-mix(in oklab, var(--primary) 25%, var(--border));
+    color:var(--primary);
+  }
+  
+  /* lista posts */
+  .posts{display:grid;gap:18px}
+  .post p{margin:.6rem 0 1rem;line-height:1.55}
+  
+  /* botones */
+  button,.btn{
+    appearance:none;font:inherit;font-weight:800;
+    padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+    background:var(--panel);color:var(--text);cursor:pointer;
+    transition:transform .04s, box-shadow .18s, background .18s, border-color .18s;
+    box-shadow:var(--shadow-sm);
+  }
+  button:hover,.btn:hover{
+    background:color-mix(in oklab, var(--panel) 85%, var(--primary-50));
+    border-color:color-mix(in oklab, var(--primary) 18%, var(--border));
+  }
+  button:active{transform:translateY(1px)}
+  button.primary{color:#fff;background:var(--primary);border-color:var(--primary)}
+  button.primary:hover{background:var(--primary-600)}
+  
+  /* reacciones más alegres */
+  .reacts{display:inline-flex;gap:10px;align-items:center}
+  .reacts button{
+    padding:8px 12px;border-radius:999px;
+    background:color-mix(in oklab, var(--amber) 12%, var(--panel));
+    border-color:color-mix(in oklab, var(--amber) 22%, var(--border));
+  }
+  .reacts button:nth-child(2){
+    background:color-mix(in oklab, var(--pink) 10%, var(--panel));
+    border-color:color-mix(in oklab, var(--pink) 20%, var(--border));
+  }
+  
+  /* comentarios con acento izquierdo */
+  .comments{margin:.6rem 0 0;padding-left:0;list-style:none}
+  .comments .comment{
+    position:relative;background:color-mix(in oklab, var(--panel) 98%, #fff);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:.65rem .9rem;margin:.55rem 0;transition:background .18s, border-color .18s, transform .06s;
+  }
+  .comments .comment::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    border-top-left-radius:inherit;border-bottom-left-radius:inherit;
+    background:linear-gradient(180deg,var(--primary) 0%, var(--cyan) 100%);
+    opacity:.65;
+  }
+  .comments .comment:hover{
+    background:color-mix(in oklab, var(--panel) 96%, var(--primary-50));
+    border-color:color-mix(in oklab, var(--primary) 20%, var(--border));
+    transform:translateY(-1px);
+  }
+  .comments .comment .meta{color:var(--muted);font-size:.9rem;margin-bottom:.25rem}
+  
+  /* flash */
+  .flash{
+    background:color-mix(in oklab,#fde68a 50%, var(--panel));
+    border:1px solid color-mix(in oklab,#f59e0b 55%, var(--border));
+    padding:.65rem .85rem;border-radius:14px;margin:.8rem 0;color:#7c4a00
+  }
+  .flash.success{
+    background:color-mix(in oklab,#a7f3d0 55%, var(--panel));
+    border-color:color-mix(in oklab,#10b981 60%, var(--border));
+    color:#075e54
+  }
+  
+  /* footer centrado (sin tocar HTML) */
+  footer.container{ text-align:center; }
+  footer.container small{ display:inline-block; opacity:.85; }
+  
+  /* links */
+  a{color:#2563eb;text-underline-offset:3px}
+  a:focus-visible{outline:none;box-shadow:var(--focus);border-radius:8px}
+  
+  /* divisoria en post */
+  .post footer{border-top:1px dashed var(--border);padding-top:12px;margin-top:10px}
+  

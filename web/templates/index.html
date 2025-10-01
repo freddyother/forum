@@ -25,19 +25,36 @@
       <div class="meta">by {{.Author}} • {{.Created}} • {{range .Cats}}<span class="chip">{{.}}</span>{{end}}</div>
     </header>
     <p>{{.Content}}</p>
+    <!-- List of comments -->
+    {{if .Comments}}
+      <ul class="comments">
+        {{range .Comments}}
+          <li class="comment">
+          <div class="meta">
+          <strong>{{.Author}}</strong> • {{.Created}}
+          </div>
+            <div class="content">{{.Content}}</div>
+        </li>
+        {{end}}
+      </ul>
+    {{end}}
+
     <footer>
-      <form action="/react" method="post" style="display:inline">
-        <input type="hidden" name="target" value="post">
-        <input type="hidden" name="id" value="{{.ID}}">
-        <input type="hidden" name="value" value="1">
-        <button type="submit">👍 {{.Likes}}</button>
-      </form>
-      <form action="/react" method="post" style="display:inline">
-        <input type="hidden" name="target" value="post">
-        <input type="hidden" name="id" value="{{.ID}}">
-        <input type="hidden" name="value" value="-1">
-        <button type="submit">👎 {{.Dislikes}}</button>
-      </form>
+      <span class="reacts">
+        <form action="/react" method="post" style="display:inline">
+          <input type="hidden" name="target" value="post">
+          <input type="hidden" name="id" value="{{.ID}}">
+          <input type="hidden" name="value" value="1">
+          <button type="submit">👍 {{.Likes}}</button>
+        </form>
+        <form action="/react" method="post" style="display:inline">
+          <input type="hidden" name="target" value="post">
+          <input type="hidden" name="id" value="{{.ID}}">
+          <input type="hidden" name="value" value="-1">
+          <button type="submit">👎 {{.Dislikes}}</button>
+        </form>
+      </span>
+    
       {{if $.UserID}}
       <form action="/comment/create" method="post" class="inline">
         <input type="hidden" name="post_id" value="{{.ID}}">
@@ -46,6 +63,7 @@
       </form>
       {{end}}
     </footer>
+    
   </article>
   {{else}}
     <p>No posts yet.</p>
