@@ -56,13 +56,13 @@ func Register(db *sql.DB, email, username, password string) error {
 
 	// Comprobar duplicados (rápido y con error claro)
 	var exists int
-	if err := db.QueryRow(`SELECT COUNT(1) FROM users WHERE email = ?`, email).Scan(&exists); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(1) FROM users WHERE email = $1`, email).Scan(&exists); err != nil {
 		return err
 	}
 	if exists > 0 {
 		return ErrEmailTaken
 	}
-	if err := db.QueryRow(`SELECT COUNT(1) FROM users WHERE username = ?`, username).Scan(&exists); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(1) FROM users WHERE username = $1`, username).Scan(&exists); err != nil {
 		return err
 	}
 	if exists > 0 {
@@ -75,7 +75,7 @@ func Register(db *sql.DB, email, username, password string) error {
 	}
 
 	_, err = db.Exec(
-		`INSERT INTO users (email, username, password_hash, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+		`INSERT INTO users (email, username, password_hash, created_at) VALUES ($1,$2,$3, CURRENT_TIMESTAMP)`,
 		email, username, string(hash),
 	)
 	// Por si hay condición de carrera con UNIQUE:
@@ -99,7 +99,7 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 	var passwdHash string
 
 	// 1) Busca el usuario
-	err := db.QueryRow(`SELECT id, password_hash FROM users WHERE email = ?`, email).Scan(&uid, &passwdHash)
+	err := db.QueryRow(`SELECT id, password_hash FROM users WHERE email = $1`, email).Scan(&uid, &passwdHash)
 	if err == sql.ErrNoRows {
 		log.Printf("auth.Login: no user for email=%s", email) // ⬅️ log
 		return "", 0, ErrInvalidLogin
@@ -124,7 +124,7 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 	defer tx.Rollback()
 
 	// (opcional) Limpia sesiones antiguas del usuario
-	if _, err := tx.Exec(`DELETE FROM sessions WHERE user_id = ?`, uid); err != nil {
+	if _, err := tx.Exec(`DELETE FROM sessions WHERE user_id = $1`, uid); err != nil {
 		log.Printf("auth.Login: delete old sessions err: %v", err) // ⬅️ log
 		return "", 0, err
 	}
@@ -134,7 +134,7 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 
 	if _, err := tx.Exec(`
         INSERT INTO sessions (id, user_id, expires_at, created_at)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        VALUES ($1,$2,$3, CURRENT_TIMESTAMP)
     `, sid, uid, exp.Format("2006-01-02 15:04:05.999999999-07:00")); err != nil {
 		log.Printf("auth.Login: insert session err: %v", err) // ⬅️ log
 		return "", 0, err
@@ -154,7 +154,7 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 // ----------------------------
 
 func Logout(db *sql.DB, sid string) error {
-	_, err := db.Exec(`DELETE FROM sessions WHERE id = ?`, sid)
+	_, err := db.Exec(`DELETE FROM sessions WHERE id = $1`, sid)
 	return err
 }
 
@@ -167,7 +167,7 @@ func UserFromSession(db *sql.DB, sid string) (int64, time.Time, error) {
 	var expRaw string
 
 	err := db.QueryRow(
-		`SELECT user_id, expires_at FROM sessions WHERE id = ?`,
+		`SELECT user_id, expires_at FROM sessions WHERE id = $1`,
 		sid,
 	).Scan(&uid, &expRaw)
 
