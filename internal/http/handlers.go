@@ -103,7 +103,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	qLiked := r.URL.Query().Has("liked")
 
 	// ---------------------------
-	// Cargar categorías (QueryContext)
+	// Cargar categorías
 	// ---------------------------
 	rows, err := s.DB.QueryContext(ctx, `SELECT id, name FROM categories ORDER BY name`)
 	if err != nil {
@@ -130,15 +130,21 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ---------------------------
-	// Query de posts + filtros
+	// Query de posts + filtros (PostgreSQL)
 	// ---------------------------
-	var args []any
-	var sb strings.Builder
+	var (
+		args []any
+		sb   strings.Builder
+	)
+	// helper para numerar $1, $2, ...
+	nextArg := func() string { return fmt.Sprintf("$%d", len(args)+1) }
+
 	sb.WriteString(`
-SELECT p.id, p.title, p.content, u.username,
-       IFNULL(SUM(CASE WHEN r.value=1  THEN 1 END),0) AS likes,
-       IFNULL(SUM(CASE WHEN r.value=-1 THEN 1 END),0) AS dislikes,
-       p.created_at
+SELECT
+  p.id, p.title, p.content, u.username,
+  COUNT(*) FILTER (WHERE r.value = 1)  AS likes,
+  COUNT(*) FILTER (WHERE r.value = -1) AS dislikes,
+  p.created_at
 FROM posts p
 JOIN users u ON u.id = p.user_id
 LEFT JOIN reactions r
@@ -156,13 +162,13 @@ LEFT JOIN reactions r
           FROM post_categories pc
           JOIN categories c ON c.id = pc.category_id
          WHERE pc.post_id = p.id
-           AND c.name = ?
+           AND c.name = ` + nextArg() + `
       )
 `)
 		args = append(args, qCat)
 	}
 	if qMine && uid != 0 {
-		sb.WriteString("  AND p.user_id = ? ")
+		sb.WriteString("  AND p.user_id = " + nextArg() + " ")
 		args = append(args, uid)
 	}
 	if qLiked && uid != 0 {
@@ -170,7 +176,7 @@ LEFT JOIN reactions r
   AND EXISTS (
         SELECT 1
           FROM reactions rx
-         WHERE rx.user_id     = ?
+         WHERE rx.user_id     = ` + nextArg() + `
            AND rx.target_type = 'post'
            AND rx.target_id   = p.id
            AND rx.value       = 1
@@ -178,7 +184,13 @@ LEFT JOIN reactions r
 `)
 		args = append(args, uid)
 	}
-	sb.WriteString(" GROUP BY p.id ORDER BY p.created_at DESC LIMIT 100 ")
+
+	// En Postgres deben agruparse TODOS los no agregados
+	sb.WriteString(`
+GROUP BY p.id, p.title, p.content, u.username, p.created_at
+ORDER BY p.created_at DESC
+LIMIT 100
+`)
 
 	rows2, err := s.DB.QueryContext(ctx, sb.String(), args...)
 	if err != nil {
@@ -197,12 +209,12 @@ LEFT JOIN reactions r
 		}
 		p.Created = created.Format("2006-01-02 15:04")
 
-		// Categorías del post (también con contexto y comprobación de errores)
+		// Categorías del post
 		rc, err := s.DB.QueryContext(ctx, `
 SELECT c.name
   FROM post_categories pc
   JOIN categories c ON c.id = pc.category_id
- WHERE pc.post_id = ?
+ WHERE pc.post_id = $1
  ORDER BY c.name
 `, p.ID)
 		if err != nil {
@@ -230,12 +242,13 @@ SELECT c.name
 			http.Error(w, "post categories err: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// comentarios del post
+
+		// Comentarios del post
 		rcm, err := s.DB.QueryContext(ctx, `
 SELECT c.id, u.username, c.content, c.created_at
   FROM comments c
   JOIN users u ON u.id = c.user_id
- WHERE c.post_id = ?
+ WHERE c.post_id = $1
  ORDER BY c.created_at ASC
 `, p.ID)
 		if err != nil {
@@ -265,6 +278,7 @@ SELECT c.id, u.username, c.content, c.created_at
 			http.Error(w, "comments err: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		posts = append(posts, p)
 	}
 	if err := rows2.Close(); err != nil {
@@ -429,7 +443,7 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.DB.Exec(`INSERT INTO posts (user_id,title,content) VALUES (?,?,?)`, uid, title, content)
+	res, err := s.DB.Exec(`INSERT INTO posts (user_id,title,content) VALUES ($1,$2,$3)`, uid, title, content)
 	if err != nil {
 		http.Error(w, "db error: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -442,9 +456,9 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		var id int64
-		err = s.DB.QueryRow(`SELECT id FROM categories WHERE name=?`, name).Scan(&id)
+		err = s.DB.QueryRow(`SELECT id FROM categories WHERE name=$1`, name).Scan(&id)
 		if err == sql.ErrNoRows {
-			rx, e2 := s.DB.Exec(`INSERT INTO categories (name) VALUES (?)`, name)
+			rx, e2 := s.DB.Exec(`INSERT INTO categories (name) VALUES ($1)`, name)
 			if e2 == nil {
 				id, _ = rx.LastInsertId()
 			} else {
@@ -454,7 +468,7 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if id != 0 {
-			_, _ = s.DB.Exec(`INSERT OR IGNORE INTO post_categories (post_id,category_id) VALUES (?,?)`, pid, id)
+			_, _ = s.DB.Exec(`INSERT OR IGNORE INTO post_categories (post_id,category_id) VALUES ($1,$2)`, pid, id)
 		}
 		log.Printf("create post uid=%d title=%q cats=%v", uid, title, cats)
 	}
@@ -473,7 +487,7 @@ func (s *Server) handleCommentCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	_, err := s.DB.Exec(`INSERT INTO comments (post_id,user_id,content) VALUES (?,?,?)`, pid, uid, content)
+	_, err := s.DB.Exec(`INSERT INTO comments (post_id,user_id,content) VALUES ($1,$2,$3)`, pid, uid, content)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -493,7 +507,7 @@ func (s *Server) handleReact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err := s.DB.Exec(`
-INSERT INTO reactions (user_id,target_type,target_id,value) VALUES (?,?,?,?)
+INSERT INTO reactions (user_id,target_type,target_id,value) VALUES ($1,$2,$3,$4)
 ON CONFLICT(user_id,target_type,target_id) DO UPDATE SET value=excluded.value
 `, uid, target, id, val)
 	if err != nil {
