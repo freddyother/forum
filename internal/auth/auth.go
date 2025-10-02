@@ -1,4 +1,3 @@
-// internal/auth/auth.go
 package auth
 
 import (
@@ -20,9 +19,9 @@ var (
 	ErrNoSession     = errors.New("session not found")
 )
 
-// ----------------------------
-// Context helpers (para middleware y handlers)
-// ----------------------------
+/* =========================
+   Context helpers
+   ========================= */
 
 type ctxKeyUserID struct{}
 
@@ -39,9 +38,9 @@ func UserIDFrom(ctx context.Context) (int64, bool) {
 	return id, id != 0
 }
 
-// ----------------------------
-// Register
-// ----------------------------
+/* =========================
+   Register (Postgres)
+   ========================= */
 
 func Register(db *sql.DB, email, username, password string) error {
 	email = strings.TrimSpace(strings.ToLower(email))
@@ -54,7 +53,7 @@ func Register(db *sql.DB, email, username, password string) error {
 		return errors.New("password must be at least 6 characters")
 	}
 
-	// Comprobar duplicados (rápido y con error claro)
+	// Comprobación rápida para mensaje amable
 	var exists int
 	if err := db.QueryRow(`SELECT COUNT(1) FROM users WHERE email = $1`, email).Scan(&exists); err != nil {
 		return err
@@ -69,28 +68,29 @@ func Register(db *sql.DB, email, username, password string) error {
 		return ErrUsernameTaken
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) // cost ~10
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(
-		`INSERT INTO users (email, username, password_hash, created_at) VALUES ($1,$2,$3, CURRENT_TIMESTAMP)`,
-		email, username, string(hash),
-	)
-	// Por si hay condición de carrera con UNIQUE:
-	if isUniqueErr(err, "users.email") {
+	_, err = db.Exec(`
+		INSERT INTO users (email, username, password_hash, created_at)
+		VALUES ($1, $2, $3, NOW())
+	`, email, username, string(hash))
+
+	// Por carrera con UNIQUE, mapea al error amigable
+	if isPgUniqueErr(err, "users_email_key") {
 		return ErrEmailTaken
 	}
-	if isUniqueErr(err, "users.username") {
+	if isPgUniqueErr(err, "users_username_key") {
 		return ErrUsernameTaken
 	}
 	return err
 }
 
-// ----------------------------
-// Login (crea sesión con UUID y expiración)
-// ----------------------------
+/* =========================
+   Login (crea sesión UUID)
+   ========================= */
 
 func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, int64, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
@@ -101,31 +101,30 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 	// 1) Busca el usuario
 	err := db.QueryRow(`SELECT id, password_hash FROM users WHERE email = $1`, email).Scan(&uid, &passwdHash)
 	if err == sql.ErrNoRows {
-		log.Printf("auth.Login: no user for email=%s", email) // ⬅️ log
+		log.Printf("auth.Login: no user for email=%s", email)
 		return "", 0, ErrInvalidLogin
 	}
 	if err != nil {
-		log.Printf("auth.Login: query user err: %v", err) // ⬅️ log
+		log.Printf("auth.Login: query user err: %v", err)
 		return "", 0, err
 	}
 
 	// 2) Verifica contraseña
 	if err := bcrypt.CompareHashAndPassword([]byte(passwdHash), []byte(password)); err != nil {
-		log.Printf("auth.Login: bad password for email=%s", email) // ⬅️ log (no revela hash)
+		log.Printf("auth.Login: bad password for email=%s", email)
 		return "", 0, ErrInvalidLogin
 	}
 
-	// 3) Crea sesión dentro de transacción
+	// 3) Crea sesión
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("auth.Login: begin tx err: %v", err) // ⬅️ log
+		log.Printf("auth.Login: begin tx err: %v", err)
 		return "", 0, err
 	}
 	defer tx.Rollback()
 
-	// (opcional) Limpia sesiones antiguas del usuario
 	if _, err := tx.Exec(`DELETE FROM sessions WHERE user_id = $1`, uid); err != nil {
-		log.Printf("auth.Login: delete old sessions err: %v", err) // ⬅️ log
+		log.Printf("auth.Login: delete old sessions err: %v", err)
 		return "", 0, err
 	}
 
@@ -133,43 +132,43 @@ func Login(db *sql.DB, email, password string, lifetime time.Duration) (string, 
 	exp := time.Now().Add(lifetime)
 
 	if _, err := tx.Exec(`
-        INSERT INTO sessions (id, user_id, expires_at, created_at)
-        VALUES ($1,$2,$3, CURRENT_TIMESTAMP)
-    `, sid, uid, exp.Format("2006-01-02 15:04:05.999999999-07:00")); err != nil {
-		log.Printf("auth.Login: insert session err: %v", err) // ⬅️ log
+		INSERT INTO sessions (id, user_id, expires_at, created_at)
+		VALUES ($1, $2, $3, NOW())
+	`, sid, uid, exp); err != nil { // ⬅️ pasa time.Time, no string
+		log.Printf("auth.Login: insert session err: %v", err)
 		return "", 0, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("auth.Login: commit err: %v", err) // ⬅️ log
+		log.Printf("auth.Login: commit err: %v", err)
 		return "", 0, err
 	}
 
-	log.Printf("auth.Login: OK email=%s uid=%d sid=%s", email, uid, sid) // ⬅️ opcional
+	log.Printf("auth.Login: OK email=%s uid=%d sid=%s", email, uid, sid)
 	return sid, uid, nil
 }
 
-// ----------------------------
-// Logout (borra la sesión por ID)
-// ----------------------------
+/* =========================
+   Logout
+   ========================= */
 
 func Logout(db *sql.DB, sid string) error {
 	_, err := db.Exec(`DELETE FROM sessions WHERE id = $1`, sid)
 	return err
 }
 
-// ----------------------------
-// UserFromSession: valida cookie y devuelve (uid, expires)
-// ----------------------------
+/* =========================
+   UserFromSession
+   ========================= */
 
 func UserFromSession(db *sql.DB, sid string) (int64, time.Time, error) {
 	var uid int64
-	var expRaw string
+	var exp time.Time
 
 	err := db.QueryRow(
 		`SELECT user_id, expires_at FROM sessions WHERE id = $1`,
 		sid,
-	).Scan(&uid, &expRaw)
+	).Scan(&uid, &exp)
 
 	if err == sql.ErrNoRows {
 		return 0, time.Time{}, ErrNoSession
@@ -177,47 +176,20 @@ func UserFromSession(db *sql.DB, sid string) (int64, time.Time, error) {
 	if err != nil {
 		return 0, time.Time{}, err
 	}
-
-	// SQLite guarda como TEXT; parseamos formatos habituales
-	exp, err := parseSQLiteTime(expRaw)
-	if err != nil {
-		// intenta como UTC sin nanos: 2006-01-02 15:04:05-07:00
-		return uid, time.Time{}, err
-	}
 	return uid, exp, nil
 }
 
-// ----------------------------
-// Helpers
-// ----------------------------
+/* =========================
+   Helpers
+   ========================= */
 
-func isUniqueErr(err error, col string) bool {
-	// SQLite: "UNIQUE constraint failed: table.column"
+// Detecta UNIQUE de Postgres por nombre de constraint en el mensaje.
+// Con UNIQUE implícitos, PG usa nombres tipo: users_email_key, users_username_key.
+func isPgUniqueErr(err error, constraint string) bool {
 	if err == nil {
 		return false
 	}
 	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "unique constraint failed") && strings.Contains(msg, strings.ToLower(col))
-}
-
-func parseSQLiteTime(s string) (time.Time, error) {
-	// ejemplos vistos:
-	// "2025-10-01 13:15:02.258078456+01:00"
-	// "2025-10-01 13:15:02+01:00"
-	// "2025-10-01T13:15:02Z"
-	layouts := []string{
-		"2006-01-02 15:04:05.999999999-07:00",
-		"2006-01-02 15:04:05-07:00",
-		time.RFC3339Nano,
-		time.RFC3339,
-	}
-	var last error
-	for _, l := range layouts {
-		if t, err := time.Parse(l, s); err == nil {
-			return t, nil
-		} else {
-			last = err
-		}
-	}
-	return time.Time{}, last
+	return strings.Contains(msg, "duplicate key value violates unique constraint") &&
+		strings.Contains(msg, strings.ToLower(constraint))
 }
