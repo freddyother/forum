@@ -11,10 +11,14 @@ import (
 )
 
 func main() {
+
 	cfg := app.LoadConfig()
+
 	d, err := db.Open(cfg.DatabaseURL)
 	app.Must(err)
-	app.Must(db.Migrate(d, "schema.sql"))
+
+	// Usa el esquema de Postgres en esta rama
+	app.Must(db.Migrate(d, "schema.pg.sql"))
 
 	srv := httpx.NewServer(d, cfg)
 

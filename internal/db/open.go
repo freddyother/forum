@@ -2,21 +2,19 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jackc/pgx/v5/stdlib" // driver "pgx"
 )
 
-// Open abre la base de datos SQLite con las PRAGMA recomendadas.
 func Open(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dsn)
-	if err != nil {
-		return nil, err
-	}
+	// Para esta rama, asumimos Postgres siempre:
+	// dsn: postgres://user:pass@host:5432/dbname?sslmode=require
+	return sql.Open("pgx", dsn)
+}
 
-	// Importante: reducir contención y evitar bloqueos largos
-	_, _ = db.Exec(`PRAGMA journal_mode=WAL;`)  // lectores no bloquean al escritor
-	_, _ = db.Exec(`PRAGMA busy_timeout=3000;`) // espera hasta 3s antes de “database is locked”
-	_, _ = db.Exec(`PRAGMA foreign_keys=ON;`)   // forzar integridad referencial
-
-	return db, nil
+// Si quisieras autodetectar driver (por si reutilizas el archivo):
+func IsPostgres(dsn string) bool {
+	ds := strings.ToLower(dsn)
+	return strings.HasPrefix(ds, "postgres://") || strings.HasPrefix(ds, "postgresql://")
 }
