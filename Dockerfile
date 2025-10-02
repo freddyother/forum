@@ -13,9 +13,9 @@ WORKDIR /app
 RUN adduser -D -u 10001 app
 COPY --from=build /app/server /app/server
 COPY web /app/web
-COPY schema.sql /app/schema.sql
+COPY schema.pg.sql /app/schema.pg.sql
 ENV ADDR=:8080
-ENV DATABASE_URL=/app/forum.db
+
 ENV SESSION_LIFETIME_HOURS=24
 USER app
 EXPOSE 8080
