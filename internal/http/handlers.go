@@ -432,48 +432,81 @@ func (s *Server) handlePostNew(w http.ResponseWriter, r *http.Request) {
 
 // ---------------------------------------------------------------------------------
 // ------------HandlePost Create Function-----------------------------------------------
+// handlers.go
 func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
 	uid, _ := auth.UserIDFrom(r.Context())
 	title := strings.TrimSpace(r.FormValue("title"))
 	content := strings.TrimSpace(r.FormValue("content"))
-	cats := r.Form["cats"]
+	cats := r.Form["cats"] // <select multiple name="cats"> o checkboxes name="cats"
 
 	if title == "" || content == "" {
 		http.Error(w, "Title and content required", http.StatusBadRequest)
 		return
 	}
 
-	res, err := s.DB.Exec(`INSERT INTO posts (user_id,title,content) VALUES ($1,$2,$3)`, uid, title, content)
+	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	// 1) Crear post y obtener id (PG: RETURNING)
+	var pid int64
+	if err := tx.QueryRowContext(ctx,
+		`INSERT INTO posts (user_id, title, content)
+         VALUES ($1,$2,$3)
+         RETURNING id`,
+		uid, title, content,
+	).Scan(&pid); err != nil {
 		http.Error(w, "db error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	pid, _ := res.LastInsertId()
 
+	// 2) Asegurar categorías y vincular (PG: ON CONFLICT DO NOTHING)
 	for _, name := range cats {
 		name = strings.TrimSpace(name)
 		if name == "" {
 			continue
 		}
-		var id int64
-		err = s.DB.QueryRow(`SELECT id FROM categories WHERE name=$1`, name).Scan(&id)
+
+		var cid int64
+		// Intentamos insertar; si ya existe, no devuelve fila (ErrNoRows).
+		err := tx.QueryRowContext(ctx, `
+			INSERT INTO categories (name)
+			VALUES ($1)
+			ON CONFLICT (name) DO NOTHING
+			RETURNING id
+		`, name).Scan(&cid)
+
 		if err == sql.ErrNoRows {
-			rx, e2 := s.DB.Exec(`INSERT INTO categories (name) VALUES ($1)`, name)
-			if e2 == nil {
-				id, _ = rx.LastInsertId()
-			} else {
+			// Ya existía: recupera su id
+			if e2 := tx.QueryRowContext(ctx, `SELECT id FROM categories WHERE name=$1`, name).Scan(&cid); e2 != nil {
+				// si no podemos obtenerla, saltamos esta categoría
 				continue
 			}
 		} else if err != nil {
+			// error real al intentar crear categoría
 			continue
 		}
-		if id != 0 {
-			_, _ = s.DB.Exec(`INSERT OR IGNORE INTO post_categories (post_id,category_id) VALUES ($1,$2)`, pid, id)
-		}
-		log.Printf("create post uid=%d title=%q cats=%v", uid, title, cats)
+
+		// Vincular post-categoría; PK (post_id,category_id) evita duplicados
+		_, _ = tx.ExecContext(ctx, `
+			INSERT INTO post_categories (post_id, category_id)
+			VALUES ($1,$2)
+			ON CONFLICT DO NOTHING
+		`, pid, cid)
 	}
 
-	// Redirige a home; si quieres ver un “flash”, puedes mandar ?ok=1 y leerlo en index.
+	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("create post uid=%d title=%q cats=%v", uid, title, cats)
 	http.Redirect(w, r, "/?ok=1", http.StatusSeeOther)
 }
 

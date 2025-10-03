@@ -19,7 +19,7 @@ A simple **web forum** written in **Go** with **SQLite**, featuring:
 ## 📦 Tech Stack
 
 - **Go 1.22+**
-- **SQLite3** (embedded database)
+- **SQLite3** (embedded database) migrate to **Postgres**
 - **bcrypt** (password hashing)
 - **UUID** (`github.com/google/uuid`)
 - **HTML + CSS + JS** (no frontend frameworks)
