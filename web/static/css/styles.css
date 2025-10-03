@@ -10,6 +10,7 @@
     --border:#e7e9f3;
     --btn-celeste: #f6eeff;        /* celeste pastel bajo */
     --btn-celeste-hover: #f1e5ff;  /* un poco más intenso para hover */
+    --btn-text: #fff;
   
     /* paleta alegre pastel */
     --indigo:#6366f1;
@@ -308,12 +309,12 @@ form[action="/post/create"] > button[type="submit"] {
   padding: 10px 16px;
   font-weight: 700;
   border-radius: 12px;
-  border: 1px solid var(--btn-blue);
-  background: var(--btn-blue);
+  border: 1px solid var(--primary);
+  background: var(--primary);
   color: var(--btn-text);
   cursor: pointer;
   transition: background .2s, border-color .2s, transform .04s;
   box-shadow: 0 6px 18px rgba(2,6,23,.06);
 }
-form[action="/post/create"] > button[type="submit"]:hover  { background: var(--btn-blue-600); border-color: var(--btn-blue-600); }
-form[action="/post/create"] > button[type="submit"]:active { background: var(--btn-blue-700); transform: translateY(1px); }
+form[action="/post/create"] > button[type="submit"]:hover  { background: var(--primary-600); border-color: var(--primary-600); }
+form[action="/post/create"] > button[type="submit"]:active { background: var(--primary-600); transform: translateY(1px); }
