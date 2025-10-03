@@ -208,3 +208,39 @@ main.container{
   /* divisoria en post */
   .post footer{border-top:1px dashed var(--border);padding-top:12px;margin-top:10px}
   
+  /* ============================
+   Login/register Forms
+   ============================ */
+
+/* El contenedor del formulario */
+form[action="/register"], 
+form[action="/login"] {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;  /* espacio entre líneas */
+  margin-top: 1rem;
+}
+
+/* Etiquetas encima de cada input */
+form[action="/register"] label,
+form[action="/login"] label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  margin-bottom: 4px;
+  gap: 6px;
+}
+
+/* Inputs más amplios */
+form[action="/register"] input,
+form[action="/login"] input {
+  padding: 12px 14px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* Botón separado */
+form[action="/register"] button,
+form[action="/login"] button {
+  margin-top: 10px;
+}
