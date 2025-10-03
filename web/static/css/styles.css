@@ -46,15 +46,34 @@
   /* contenedor */
   .container{max-width:1000px;margin:0 auto;padding:clamp(14px,2vw,22px)}
   
-  /* header */
-  header{
-    position:sticky;top:0;z-index:40;
-    backdrop-filter:saturate(1.1) blur(6px);
-    background:color-mix(in oklab, var(--panel) 92%, transparent);
-    border-bottom:1px solid var(--border);
-  }
-  .header-inner{max-width:1000px;margin:0 auto;padding:12px clamp(14px,2vw,22px);
-    display:flex;align-items:center;justify-content:space-between;gap:14px}
+  /* --- Sticky header por encima del contenido --- */
+header{
+  position: sticky;       /* se queda pegado al llegar arriba */
+  top: 0;
+  z-index: 2000;          /* por encima de tarjetas/comentarios */
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 20px rgba(2,6,23,.06);
+}
+  /* estructura interna del header (puedes mantener lo que ya tenías) */
+.header-inner{
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 12px clamp(14px, 2vw, 22px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+/* pequeño respiro por si el header llega a tapar el primer elemento */
+main.container{
+  padding-top: 8px;
+}
+/* (opcional) evita que algún contenedor cree stacking context por z-index bajo */
+.posts, .post, .comments, .comment{
+  position: relative;     /* normaliza stacking sin elevarlos */
+  z-index: 1;
+}
   .brand{font-weight:800;letter-spacing:.2px;font-size:1.12rem}
   nav a, nav form button{
     color:var(--muted); text-decoration:none; font-weight:700;
