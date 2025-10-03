@@ -8,6 +8,8 @@
     --text:#1f2937;
     --muted:#667085;
     --border:#e7e9f3;
+    --btn-celeste: #f6eeff;        /* celeste pastel bajo */
+    --btn-celeste-hover: #f1e5ff;  /* un poco más intenso para hover */
   
     /* paleta alegre pastel */
     --indigo:#6366f1;
@@ -209,38 +211,64 @@ main.container{
   .post footer{border-top:1px dashed var(--border);padding-top:12px;margin-top:10px}
   
   /* ============================
-   Login/register Forms
+   Login/register Forms - Fix
    ============================ */
 
-/* El contenedor del formulario */
+/* Contenedor */
 form[action="/register"], 
 form[action="/login"] {
   display: flex;
   flex-direction: column;
-  gap: 18px;  /* espacio entre líneas */
+  gap: 18px;
   margin-top: 1rem;
 }
 
-/* Etiquetas encima de cada input */
+/* Etiquetas con margen inferior */
 form[action="/register"] label,
 form[action="/login"] label {
-  display: flex;
-  flex-direction: column;
   font-weight: 600;
-  margin-bottom: 4px;
-  gap: 6px;
+  margin-bottom: 6px;
 }
 
-/* Inputs más amplios */
+/* Inputs uniformes (incluido Username) */
 form[action="/register"] input,
 form[action="/login"] input {
+  width: 100%;
   padding: 12px 14px;
   font-size: 1rem;
-  line-height: 1.4;
+  border-radius: 12px;
+  border: 1px solid var(--border);  /* igual que los otros */
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
 }
 
-/* Botón separado */
+/* Hover/focus igual que el resto */
+form[action="/register"] input:focus,
+form[action="/login"] input:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus);
+}
+
+/* Botones Login/Register con color pastel */
 form[action="/register"] button,
 form[action="/login"] button {
   margin-top: 10px;
+  padding: 12px 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid var(--btn-celeste);
+  background: var(--btn-celeste);
+  color: #1f2937;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+
+/* Hover */
+form[action="/register"] button:hover,
+form[action="/login"] button:hover {
+  background: var(----primary);
+  border-color: var(----primary-600);
 }
