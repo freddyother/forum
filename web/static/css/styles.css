@@ -230,7 +230,7 @@ form[action="/login"] label {
   margin-bottom: 6px;
 }
 
-/* Inputs uniformes (incluido Username) */
+/* Inputs uniforms ( Username include) */
 form[action="/register"] input,
 form[action="/login"] input {
   width: 100%;
@@ -255,20 +255,25 @@ form[action="/login"] input:focus {
 /* Botones Login/Register con color pastel */
 form[action="/register"] button,
 form[action="/login"] button {
-  margin-top: 10px;
-  padding: 12px 14px;
+  margin: 16px auto 0;       /* auto en los lados lo centra */
+  padding: 10px 26px;        /* menos ancho que antes */
   font-weight: 700;
   border-radius: 12px;
-  border: 1px solid var(--btn-celeste);
-  background: var(--btn-celeste);
-  color: #1f2937;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: white;              /* mejor contraste */
   cursor: pointer;
-  transition: background .2s, border-color .2s;
+  transition: background .2s, border-color .2s, transform .05s;
+  display: block;            /* asegura centrado */
+  width: auto;               /* ya no ocupa todo el ancho */
+  min-width: 130px;          /* tamaño mínimo para consistencia */
+  text-align: center;
 }
 
 /* Hover */
 form[action="/register"] button:hover,
 form[action="/login"] button:hover {
-  background: var(----primary);
-  border-color: var(----primary-600);
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  transform: translateY(-1px);
 }
