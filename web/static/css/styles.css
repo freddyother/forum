@@ -286,15 +286,15 @@ form[action="/login"] button:hover {
     padding: 8px 14px;
     font-weight: 700;
     border-radius: 12px;
-    border: 1px solid var(--btn-blue);
-    background: var(--btn-blue);
+    border: 1px solid var(--primary);
+    background: var(--primary);
     color: var(--btn-text);
     cursor: pointer;
     transition: background .2s, border-color .2s, transform .04s;
     box-shadow: 0 6px 18px rgba(2,6,23,.06);
   }
-  section.filters button:hover  { background: var(--btn-blue-600); border-color: var(--btn-blue-600); }
-  section.filters button:active { background: var(--btn-blue-700); transform: translateY(1px); }
+  section.filters button:hover  { background: var(--primary-600); border-color: var(--primary-600); }
+  section.filters button:active { background: var(--primary-600); transform: translateY(1px); }
   
   /* === Publish (en /post/new) ===
    Lo alineamos a la derecha sin cambiar el HTML */
@@ -305,7 +305,7 @@ form[action="/post/create"] {
 }
 
 form[action="/post/create"] > button[type="submit"] {
-  align-self: flex-end;        /* -> a la derecha */
+  align-self: flex-start;        /* -> a la derecha */
   padding: 10px 16px;
   font-weight: 700;
   border-radius: 12px;
