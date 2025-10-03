@@ -8,17 +8,21 @@ import (
 )
 
 type Config struct {
-	Addr                string
-	DatabaseURL         string
-	SessionLifetime     time.Duration
+	Addr            string
+	DatabaseURL     string
+	SessionLifetime time.Duration
 }
 
 func LoadConfig() Config {
 	addr := getenv("ADDR", ":8080")
-	dbURL := getenv("DATABASE_URL", "./forum.db")
+	dbURL := getenv("DATABASE_URL",
+		"postgres://forum_user:devpass@localhost:5432/forum_postgres?sslmode=disable",
+	)
 	lifeHours := getenv("SESSION_LIFETIME_HOURS", "24")
 	dur, err := time.ParseDuration(lifeHours + "h")
-	if err != nil { dur = 24 * time.Hour }
+	if err != nil {
+		dur = 24 * time.Hour
+	}
 	return Config{
 		Addr:            addr,
 		DatabaseURL:     dbURL,
@@ -28,7 +32,9 @@ func LoadConfig() Config {
 
 func getenv(k, def string) string {
 	v := os.Getenv(k)
-	if v == "" { return def }
+	if v == "" {
+		return def
+	}
 	return v
 }
 
