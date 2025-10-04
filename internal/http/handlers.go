@@ -66,6 +66,7 @@ type pageData struct {
 		Mine     bool
 		Liked    bool
 	}
+    FlashOK bool //  true = éxito, false = error
 }
 
 type catVM struct {
@@ -302,9 +303,16 @@ SELECT c.id, u.username, c.content, c.created_at
 	data.Filters.Category = qCat
 	data.Filters.Mine = qMine
 	data.Filters.Liked = qLiked
+
 	if r.URL.Query().Get("ok") == "1" {
 		data.Flash = "Post created successfully"
+		data.FlashOK = true
 	}
+	if r.URL.Query().Get("err") != "" {
+		data.Flash = r.URL.Query().Get("err")
+		data.FlashOK = false
+	}
+
 	s.fillUserMeta(r.Context(), &data) // 👈 añade Username e inicial si hay sesión
 	util.Render(w, "index.html", data)
 }
@@ -442,6 +450,15 @@ func (s *Server) handlePostNew(w http.ResponseWriter, r *http.Request) {
 
 	// 3) Completar metadatos de usuario para el layout (UserID/Username/Initial)
 	s.fillUserMeta(ctx, &data)
+
+	if r.URL.Query().Get("ok") == "1" {
+		data.Flash = "Post created successfully"
+		data.FlashOK = true
+	}
+	if r.URL.Query().Get("err") != "" {
+		data.Flash = r.URL.Query().Get("err")
+		data.FlashOK = false
+	}
 
 	util.Render(w, "post_new.html", data)
 }

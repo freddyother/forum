@@ -1,26 +1,67 @@
 {{define "content"}}
 <h2>Create account</h2>
 
-{{if .Error}}<div class="flash">{{.Error}}</div>{{end}}
-
-<form method="post" action="/register" class="card" id="registerForm" novalidate>
-  <label>Email
-    <input type="email" name="email" value="{{.Email}}" required autocomplete="email" autofocus>
+{{if .Error}}
+<div class="flash">{{.Error}}</div>
+{{end}}
+<div
+  id="regError"
+  class="flash"
+  style="display: none; margin-top: 0.25rem"
+></div>
+<form
+  method="post"
+  action="/register"
+  class="card"
+  id="registerForm"
+  novalidate
+>
+  <label
+    >Email
+    <input
+      type="email"
+      name="email"
+      value="{{.Email}}"
+      required
+      autocomplete="email"
+      autofocus
+    />
   </label>
-  <label>Username
-    <input name="username" value="{{.Username}}" minlength="3" required autocomplete="username">
+  <label
+    >Username
+    <input
+      name="username"
+      value="{{.Username}}"
+      minlength="3"
+      required
+      autocomplete="username"
+    />
   </label>
-  <label>Password
-    <input type="password" name="password" id="regPass" minlength="6" required autocomplete="new-password">
+  <label
+    >Password
+    <input
+      type="password"
+      name="password"
+      id="regPass"
+      minlength="6"
+      required
+      autocomplete="new-password"
+    />
   </label>
-  <label>Confirm password
-    <input type="password" id="regPass2" minlength="6" required autocomplete="new-password">
+  <label
+    >Confirm password
+    <input
+      type="password"
+      id="regPass2"
+      minlength="6"
+      required
+      autocomplete="new-password"
+    />
   </label>
   <button type="submit">Sign up</button>
-  <div id="regError" class="flash" style="display:none;margin-top:.25rem"></div>
 </form>
 
-<p class="container" style="margin-top:.5rem">
+<p class="container" style="margin-top: 0.5rem">
   Already have an account? <a href="/login">Sign in</a>
 </p>
 {{end}}
