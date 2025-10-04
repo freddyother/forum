@@ -1,44 +1,24 @@
 {{define "content"}}
 <section class="filters">
   <form method="get" class="filters-form">
-    <label
-      >Category:
+    <label></label>
+      Category:
       <!-- para anónimos, auto-submit al cambiar -->
       <select name="cat" onchange="this.form.submit()">
         <option value="">-- all --</option>
         {{range .Categories}}
-        <option
-          value="{{.Name}}"
-          {{if
-          eq
-          $.Filters.Category
-          .Name}}selected{{end}}
-        >
-          {{.Name}}
-        </option>
+        <option value="{{.Name}}" {{if eq $.Filters.Category .Name}}selected{{end}}>{{.Name}}</option>
         {{end}}
       </select>
     </label>
 
     {{if .UserID}}
     <label>
-      <input
-        type="checkbox"
-        name="mine"
-        value="1"
-        {{if
-        .Filters.Mine}}checked{{end}}
-      />
+      <input type="checkbox" name="mine" value="1" {{if .Filters.Mine}}checked{{end}} />
       My posts
     </label>
     <label>
-      <input
-        type="checkbox"
-        name="liked"
-        value="1"
-        {{if
-        .Filters.Liked}}checked{{end}}
-      />
+      <input type="checkbox" name="liked" value="1" {{if .Filters.Liked}}checked{{end}} />
       Liked
     </label>
     <!-- botón de filter solo para usuarios -->
@@ -53,9 +33,9 @@
     <header>
       <h3>{{.Title}}</h3>
       <div class="meta">
-        by {{.Author}} • {{.Created}} • {{range .Cats}}<span class="chip"
-          >{{.}}</span
-        >{{end}}
+        by {{.Author}} • {{.Created}} • {{range .Cats}}
+        <span class="chip">{{.}}</span>
+        {{end}}
       </div>
     </header>
 
@@ -65,7 +45,10 @@
     <ul class="comments">
       {{range .Comments}}
       <li class="comment">
-        <div class="meta"><strong>{{.Author}}</strong> • {{.Created}}</div>
+        <div class="meta">
+          <strong>{{.Author}}</strong>
+          • {{.Created}}
+        </div>
         <div class="content">{{.Content}}</div>
       </li>
       {{end}}
