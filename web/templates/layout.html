@@ -1,44 +1,48 @@
 {{define "base"}}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>{{.Title}}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="/static/css/styles.css" rel="stylesheet" />
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <title>{{.Title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/static/css/styles.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="brand">Forum</div>
+        <nav>
+          {{if .UserID}}
+          <!-- 👇 Avatar + username a la izquierda de Home -->
+          <span class="nav-user">
+            <span class="avatar">{{.UserInitial}}</span>
+            <span class="uname">{{.Username}}</span>
+          </span>
+          {{end}}
+          <a href="/">Home</a>
+          {{if .UserID}}
+          <a href="/post/new" class="primary">New Post</a>
+          <form action="/logout" method="post" style="display: inline">
+            <button type="submit">Logout</button>
+          </form>
+          {{else}}
+          <a href="/login">Login</a>
+          <a href="/register">Register</a>
+          {{end}}
+        </nav>
+      </div>
+    </header>
 
-<header>
-  <div class="header-inner">
-    <div class="brand">Forum</div>
-    <nav>
-      <a href="/">Home</a>
-      {{if .UserID}}
-        <a href="/post/new" class="primary">New Post</a>
-        <form action="/logout" method="post" style="display:inline">
-          <button type="submit">Logout</button>
-        </form>
-      {{else}}
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
-      {{end}}
-    </nav>
-  </div>
-</header>
+    <main class="container">
+      {{template "_flash.html" .}} {{template "content" .}}
+    </main>
 
-<main class="container">
-  {{template "_flash.html" .}}
-  {{template "content" .}}
-</main>
+    <footer class="container footer">
+      <small>Postgres • Go • Docker ---</small>
+      <small>Fredy ® </small>
+    </footer>
 
-<footer class="container footer">
-  <small>Postgres • Go • Docker ---</small>
-  <small>Fredy ® </small>
-</footer>
-
-<script src="/static/js/app.js"></script>
-</body>
+    <script src="/static/js/app.js"></script>
+  </body>
 </html>
 {{end}}
-

@@ -58,6 +58,7 @@ type pageData struct {
 	Flash      string
 	UserID     int64
 	Username   string
+	UserInitial string
 	Categories []catVM
 	Posts      []postVM
 	Filters    struct {
@@ -304,7 +305,7 @@ SELECT c.id, u.username, c.content, c.created_at
 	if r.URL.Query().Get("ok") == "1" {
 		data.Flash = "Post created successfully"
 	}
-
+	s.fillUserMeta(r.Context(), &data) // 👈 añade Username e inicial si hay sesión
 	util.Render(w, "index.html", data)
 }
 
@@ -410,24 +411,39 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------------
 // ------------HandlePostNew Function-----------------------------------------------
 func (s *Server) handlePostNew(w http.ResponseWriter, r *http.Request) {
-	uid, _ := auth.UserIDFrom(r.Context()) // <— añade esto
+	ctx := r.Context()
 
-	// list categories
-	rows, _ := s.DB.Query(`SELECT id,name FROM categories ORDER BY name`)
+	// 1) Cargar categorías (con manejo de errores)
+	rows, err := s.DB.QueryContext(ctx, `SELECT id, name FROM categories ORDER BY name`)
+	if err != nil {
+		http.Error(w, "categories query: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
 	var cats []catVM
 	for rows.Next() {
 		var c catVM
-		_ = rows.Scan(&c.ID, &c.Name)
+		if err := rows.Scan(&c.ID, &c.Name); err != nil {
+			http.Error(w, "categories scan: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 		cats = append(cats, c)
 	}
-	_ = rows.Close()
+	if err := rows.Err(); err != nil {
+		http.Error(w, "categories err: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	// pasa UserID y Title para que el layout lo use correctamente
-	util.Render(w, "post_new.html", map[string]any{
-		"Cats":   cats,
-		"UserID": uid,
-		"Title":  "New Post",
-	})
+	// 2) Preparar datos de la página
+	var data pageData
+	data.Title       = "New Post"
+	data.Categories  = cats
+
+	// 3) Completar metadatos de usuario para el layout (UserID/Username/Initial)
+	s.fillUserMeta(ctx, &data)
+
+	util.Render(w, "post_new.html", data)
 }
 
 // ---------------------------------------------------------------------------------
@@ -437,15 +453,26 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
+	// Asegura parseo del form (seguro incluso si ya se parseó)
+    if err := r.ParseForm(); err != nil {
+        http.Redirect(w, r, "/post/new?err="+url.QueryEscape("bad form: "+err.Error()), http.StatusSeeOther)
+        return
+    }
+
 	uid, _ := auth.UserIDFrom(r.Context())
 	title := strings.TrimSpace(r.FormValue("title"))
 	content := strings.TrimSpace(r.FormValue("content"))
 	cats := r.Form["cats"] // <select multiple name="cats"> o checkboxes name="cats"
+	newCat := strings.TrimSpace(r.FormValue("newcat")) // input de “nueva categoría”
 
 	if title == "" || content == "" {
 		http.Error(w, "Title and content required", http.StatusBadRequest)
 		return
 	}
+	if len(cats) == 0 && newCat == "" {
+        http.Redirect(w, r, "/post/new?err=Please pick at least one category", http.StatusSeeOther)
+        return
+    }
 
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -465,8 +492,11 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "db error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// 2) Asegurar categorías y vincular (PG: ON CONFLICT DO NOTHING)
+   // 2) Normalizamos el conjunto de categorías (existentes + la nueva si aplica)
+   if newCat != "" {
+	cats = append(cats, newCat)
+}
+	// 3) Asegurar categorías y vincular (PG: ON CONFLICT DO NOTHING)
 	for _, name := range cats {
 		name = strings.TrimSpace(name)
 		if name == "" {
@@ -486,25 +516,29 @@ func (s *Server) handlePostCreate(w http.ResponseWriter, r *http.Request) {
 			// Ya existía: recupera su id
 			if e2 := tx.QueryRowContext(ctx, `SELECT id FROM categories WHERE name=$1`, name).Scan(&cid); e2 != nil {
 				// si no podemos obtenerla, saltamos esta categoría
+				log.Printf("skip category %q: %v", name, e2)
 				continue
 			}
 		} else if err != nil {
 			// error real al intentar crear categoría
+			log.Printf("insert category %q err: %v", name, err)
 			continue
 		}
 
 		// Vincular post-categoría; PK (post_id,category_id) evita duplicados
-		_, _ = tx.ExecContext(ctx, `
-			INSERT INTO post_categories (post_id, category_id)
-			VALUES ($1,$2)
-			ON CONFLICT DO NOTHING
-		`, pid, cid)
+		if _, e3 := tx.ExecContext(ctx, `
+            INSERT INTO post_categories (post_id, category_id)
+            VALUES ($1,$2)
+            ON CONFLICT DO NOTHING
+        `, pid, cid); e3 != nil {
+            log.Printf("link post-category err: %v", e3)
+        }
 	}
 
 	if err := tx.Commit(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+        http.Redirect(w, r, "/post/new?err="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+        return
+    }
 
 	log.Printf("create post uid=%d title=%q cats=%v", uid, title, cats)
 	http.Redirect(w, r, "/?ok=1", http.StatusSeeOther)
@@ -548,6 +582,24 @@ ON CONFLICT(user_id,target_type,target_id) DO UPDATE SET value=excluded.value
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+//--------------------------------------------------------------------------------------
+//--------------fillUserMeta Function helper-------------------------------------------
+
+func (s *Server) fillUserMeta(ctx context.Context, data *pageData) {
+    if uid, ok := auth.UserIDFrom(ctx); ok && uid != 0 {
+        data.UserID = uid
+
+        var name string
+        // Postgres
+        _ = s.DB.QueryRowContext(ctx, `SELECT username FROM users WHERE id = $1`, uid).Scan(&name)
+
+        if name != "" {
+            data.Username = name
+            r := []rune(name)
+            data.UserInitial = strings.ToUpper(string(r[0]))
+        }
+    }
 }
 
 // helper used in templates

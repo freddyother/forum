@@ -19,14 +19,16 @@ A simple **web forum** written in **Go** with **SQLite**, featuring:
 ## 📦 Tech Stack
 
 - **Go 1.22+**
-- **SQLite3** (embedded database) migrate to **Postgres**
+- **SQLite3** (embedded database) migrated to **Postgres**
 - **bcrypt** (password hashing)
 - **UUID** (`github.com/google/uuid`)
 - **HTML + CSS + JS** (no frontend frameworks)
 - **Docker & Docker Compose**
 
 ---
+
 ## 🗄️ Project Structure
+
 ```text
 forum/
 ├─ cmd/server/         # main.go (server entrypoint)
@@ -50,6 +52,7 @@ forum/
 
 
 ```
+
 ---
 
 ## 🧪 Tests
@@ -87,12 +90,14 @@ SQLite initialised with PRAGMA foreign_keys=ON.
 🔜 CI/CD with automated testing.
 
 ---
+
 ## 📜 Licence
 
 This project was built for educational purposes as part of 01Founders coursework.
 You are welcome to adapt or extend it for your own use.
 
 ---
+
 ## ⚙️ Installation & Usage
 
 ### 1. Clone the repository
@@ -119,4 +124,5 @@ docker compose up --build
 Open in your browser: http://localhost:8080
 
 ```
+
 ---

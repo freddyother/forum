@@ -1,27 +1,48 @@
 {{define "content"}}
 <section class="filters">
   <form method="get" class="filters-form">
-    <label>Category:
+    <label
+      >Category:
       <!-- para anónimos, auto-submit al cambiar -->
       <select name="cat" onchange="this.form.submit()">
         <option value="">-- all --</option>
         {{range .Categories}}
-          <option value="{{.Name}}" {{if eq $.Filters.Category .Name}}selected{{end}}>{{.Name}}</option>
+        <option
+          value="{{.Name}}"
+          {{if
+          eq
+          $.Filters.Category
+          .Name}}selected{{end}}
+        >
+          {{.Name}}
+        </option>
         {{end}}
       </select>
     </label>
 
     {{if .UserID}}
-      <label>
-        <input type="checkbox" name="mine" value="1" {{if .Filters.Mine}}checked{{end}}>
-        My posts
-      </label>
-      <label>
-        <input type="checkbox" name="liked" value="1" {{if .Filters.Liked}}checked{{end}}>
-        Liked
-      </label>
-      <!-- botón de filter solo para usuarios -->
-      <button type="submit" class="btn-filter">Filter</button>
+    <label>
+      <input
+        type="checkbox"
+        name="mine"
+        value="1"
+        {{if
+        .Filters.Mine}}checked{{end}}
+      />
+      My posts
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="liked"
+        value="1"
+        {{if
+        .Filters.Liked}}checked{{end}}
+      />
+      Liked
+    </label>
+    <!-- botón de filter solo para usuarios -->
+    <button type="submit" class="btn-filter">Filter</button>
     {{end}}
   </form>
 </section>
@@ -32,51 +53,52 @@
     <header>
       <h3>{{.Title}}</h3>
       <div class="meta">
-        by {{.Author}} • {{.Created}} •
-        {{range .Cats}}<span class="chip">{{.}}</span>{{end}}
+        by {{.Author}} • {{.Created}} • {{range .Cats}}<span class="chip"
+          >{{.}}</span
+        >{{end}}
       </div>
     </header>
 
     <p>{{.Content}}</p>
 
     {{if .Comments}}
-      <ul class="comments">
-        {{range .Comments}}
-          <li class="comment">
-            <div class="meta"><strong>{{.Author}}</strong> • {{.Created}}</div>
-            <div class="content">{{.Content}}</div>
-          </li>
-        {{end}}
-      </ul>
+    <ul class="comments">
+      {{range .Comments}}
+      <li class="comment">
+        <div class="meta"><strong>{{.Author}}</strong> • {{.Created}}</div>
+        <div class="content">{{.Content}}</div>
+      </li>
+      {{end}}
+    </ul>
     {{end}}
 
     <footer>
       <span class="reacts">
-        <form action="/react" method="post" style="display:inline">
-          <input type="hidden" name="target" value="post">
-          <input type="hidden" name="id" value="{{.ID}}">
-          <input type="hidden" name="value" value="1">
+        <form action="/react" method="post" style="display: inline">
+          <input type="hidden" name="target" value="post" />
+          <input type="hidden" name="id" value="{{.ID}}" />
+          <input type="hidden" name="value" value="1" />
           <button type="submit">👍 {{.Likes}}</button>
         </form>
-        <form action="/react" method="post" style="display:inline">
-          <input type="hidden" name="target" value="post">
-          <input type="hidden" name="id" value="{{.ID}}">
-          <input type="hidden" name="value" value="-1">
+        <form action="/react" method="post" style="display: inline">
+          <input type="hidden" name="target" value="post" />
+          <input type="hidden" name="id" value="{{.ID}}" />
+          <input type="hidden" name="value" value="-1" />
           <button type="submit">👎 {{.Dislikes}}</button>
         </form>
       </span>
 
       {{if $.UserID}}
       <form action="/comment/create" method="post" class="inline">
-        <input type="hidden" name="post_id" value="{{.ID}}">
-        <input name="content" placeholder="Add a comment..." required>
+        <input type="hidden" name="post_id" value="{{.ID}}" />
+        <input name="content" placeholder="Add a comment..." required />
         <button>Comment</button>
       </form>
       {{end}}
     </footer>
   </article>
   {{else}}
-    <p>No posts yet.</p>
+  <p>No posts yet.</p>
   {{end}}
 </section>
 {{end}}
